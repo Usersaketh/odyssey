@@ -22,7 +22,7 @@ import { MapPin, X, ImagePlus, ChevronLeft } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Location } from '@/types';
 import { journalApi } from '@/services/api';
-import { getCoordinatesFromPlaceName, debounce } from '@/utils/geocoding';
+import { getCoordinatesFromPlaceName, getLocationSuggestions, debounce } from '@/utils/geocoding';
 import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
@@ -78,18 +78,23 @@ const CreateJournalForm = () => {
 
       setLocationQuery(query);
       setIsSearchingLocation(true);
-      setIsGeocoding(true);
       
       try {
-        const coordinates = await getCoordinatesFromPlaceName(query);
-        if (coordinates) {
-          setLocationSuggestions([{
-            name: query,
-            latitude: coordinates.latitude,
-            longitude: coordinates.longitude,
-            placeName: query
-          }]);
+        // Use the proper autocomplete function
+        const suggestions = await getLocationSuggestions(query);
+        if (suggestions && suggestions.length > 0) {
+          // Convert suggestions to the Location interface format
+          const locations: Location[] = suggestions.map(suggestion => ({
+            name: suggestion.name,
+            latitude: suggestion.latitude,
+            longitude: suggestion.longitude,
+            placeName: suggestion.placeName,
+            country: suggestion.country,
+            city: suggestion.city
+          }));
+          setLocationSuggestions(locations);
         } else {
+          // If no suggestions found, clear the list
           setLocationSuggestions([]);
         }
       } catch (error) {
@@ -97,11 +102,10 @@ const CreateJournalForm = () => {
         setLocationSuggestions([]);
         toast({
           variant: "destructive",
-          description: 'Failed to get location coordinates. Please try again.',
+          description: 'Location search temporarily unavailable. Please try again.',
         });
       } finally {
         setIsSearchingLocation(false);
-        setIsGeocoding(false);
       }
     }, 500),
     [toast]
