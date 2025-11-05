@@ -19,10 +19,22 @@ export const useTheme = () => {
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<ThemeMode>('light');
 
+  // Initialize theme from localStorage or system preference
   useEffect(() => {
-    // Clear any stored theme preference and set to light
-    localStorage.removeItem('odyssey-theme');
-    setTheme('light');
+    try {
+      const stored = localStorage.getItem('odyssey-theme') as ThemeMode | null;
+      if (stored === 'light' || stored === 'dark') {
+        setTheme(stored);
+        return;
+      }
+
+      // Fallback to system preference
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setTheme(prefersDark ? 'dark' : 'light');
+    } catch (e) {
+      // If localStorage or matchMedia is unavailable, default to light
+      setTheme('light');
+    }
   }, []);
 
   useEffect(() => {
@@ -30,9 +42,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     root.classList.remove('light', 'dark');
     root.classList.add(theme);
 
-    // Only store theme if it's not light (user preference)
-    if (theme !== 'light') {
+    // Persist selected theme
+    try {
       localStorage.setItem('odyssey-theme', theme);
+    } catch (e) {
+      // ignore storage errors
     }
   }, [theme]);
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X, Moon, Sun } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -32,6 +32,18 @@ export default function Navbar() {
     console.log("user :",user?.avatar);
   };
 
+  const navigate = useNavigate();
+
+  const handleMapClick = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    if (isAuthenticated) {
+      navigate('/map');
+    } else {
+      // Redirect unauthenticated users to login
+      navigate('/login', { state: { from: '/map' } });
+    }
+  };
+
   return (
     <nav className="bg-background border-b shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -48,9 +60,9 @@ export default function Navbar() {
             <Link to="/explore" className="text-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors">
               Explore
             </Link>
-            <Link to="/map" className="text-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors">
+            <button onClick={handleMapClick} className="text-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors">
               Map
-            </Link>
+            </button>
             <Link to="/timeline" className="text-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors">
               Timeline
             </Link>
@@ -129,13 +141,12 @@ export default function Navbar() {
             >
               Explore
             </Link>
-            <Link
-              to="/map"
-              className="block text-foreground hover:text-primary px-3 py-2 rounded-md text-base font-medium"
-              onClick={() => setIsOpen(false)}
+            <button
+              onClick={(e) => { handleMapClick(e); setIsOpen(false); }}
+              className="block text-foreground hover:text-primary px-3 py-2 rounded-md text-base font-medium w-full text-left"
             >
               Map
-            </Link>
+            </button>
 
             {isAuthenticated ? (
               <>

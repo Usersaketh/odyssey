@@ -14,6 +14,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 // Fix Leaflet marker icons (Next.js workaround)
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -29,10 +30,13 @@ const MapViewPage = () => {
   const [showOnlyMyJournals, setShowOnlyMyJournals] = useState(false);
   const [selectedJournal, setSelectedJournal] = useState<JournalEntry | null>(null);
   
-  // Filter journals based on the switch state
-  const filteredJournals = showOnlyMyJournals && isAuthenticated
-    ? journals.filter(journal => journal.userId === user?.id)
-    : journals.filter(journal => journal.isPublic);
+  // When unauthenticated we show an empty map (no markers). If authenticated, apply filters.
+  let filteredJournals = [] as JournalEntry[];
+  if (isAuthenticated) {
+    filteredJournals = showOnlyMyJournals
+      ? journals.filter(journal => journal.userId === user?.id)
+      : journals.filter(journal => journal.isPublic);
+  }
 
   const selectNextJournal = () => {
     if (!selectedJournal) return;
@@ -67,6 +71,22 @@ const MapViewPage = () => {
               onCheckedChange={setShowOnlyMyJournals}
             />
             <Label htmlFor="show-only-my-journals" className="text-sm">Show private also</Label>
+          </div>
+        )}
+        {!isAuthenticated && (
+          <div className="mb-4">
+            <div className="rounded-md border bg-muted p-4 text-center">
+              <h3 className="font-semibold mb-2">Please log in to view travel locations</h3>
+              <p className="text-sm text-muted-foreground mb-3">For privacy reasons, location markers are only visible to signed-in users.</p>
+              <div className="flex justify-center gap-2">
+                <Link to="/login">
+                  <Button>Log in</Button>
+                </Link>
+                <Link to="/explore">
+                  <Button variant="ghost">Browse Explore</Button>
+                </Link>
+              </div>
+            </div>
           </div>
         )}
         
