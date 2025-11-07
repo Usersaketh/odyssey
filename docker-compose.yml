@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8
+    container_name: odyssey-db
+    restart: always
+    ports:
+      - "3307:3306"  # use 3307 on host
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: odyssey
+      MYSQL_USER: odyssey_user
+      MYSQL_PASSWORD: odyssey_pass
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: ./odyssey-backend
+      dockerfile: Dockerfile
+    container_name: odyssey-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/odyssey
+      SPRING_DATASOURCE_USERNAME: odyssey_user
+      SPRING_DATASOURCE_PASSWORD: odyssey_pass
+      SPRING_PROFILES_ACTIVE: production
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "9090:9090"
+
+  frontend:
+    build:
+      context: ./odyssey-frontend
+      dockerfile: Dockerfile
+    container_name: odyssey-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  db_data:
